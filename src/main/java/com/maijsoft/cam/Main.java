@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2024 MAIJSOFT Dev
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>
+ */
+
 package com.maijsoft.cam;
 
 import org.bukkit.Bukkit;
@@ -19,6 +36,7 @@ public class Main extends JavaPlugin implements TabCompleter {
     private final Map<Integer, Location> startPositions = new HashMap<>();
     private final Map<Integer, Location> endPositions = new HashMap<>();
     private final Map<Integer, Double> durations = new HashMap<>();
+    private final Map<Integer, Location> endTeleportPositions = new HashMap<>();
     private final Map<Player, GameMode> originalGameModes = new HashMap<>();
 
     @Override
@@ -52,6 +70,10 @@ public class Main extends JavaPlugin implements TabCompleter {
                 case "endpos" -> {
                     endPositions.put(actionNumber, player.getLocation());
                     player.sendMessage("End position for action " + actionNumber + " set.");
+                }
+                case "endtp" -> {
+                    endTeleportPositions.put(actionNumber, player.getLocation());
+                    player.sendMessage("End teleport position for action " + actionNumber + " set.");
                 }
                 case "postime" -> {
                     if (args.length < 3) {
@@ -97,6 +119,7 @@ public class Main extends JavaPlugin implements TabCompleter {
         Location start = startPositions.get(actionNumber);
         Location end = endPositions.get(actionNumber);
         double duration = durations.get(actionNumber);
+        Location endTeleport = endTeleportPositions.getOrDefault(actionNumber, end);
 
         // 원래 게임 모드 저장
         originalGameModes.put(player, player.getGameMode());
@@ -113,7 +136,7 @@ public class Main extends JavaPlugin implements TabCompleter {
 
                 if (t >= 1) {
                     // 카메라 종료 처리
-                    player.teleport(end);
+                    player.teleport(endTeleport);
                     player.sendMessage("Camera movement completed.");
 
                     GameMode originalGameMode = originalGameModes.remove(player);
@@ -144,37 +167,18 @@ public class Main extends JavaPlugin implements TabCompleter {
         }.runTaskTimer(this, 0, 1); // 1틱 간격으로 실행
     }
 
-    /**
-     * 두 값을 보간(interpolation)합니다.
-     */
     private double interpolate(double start, double end, double t) {
         return start + (end - start) * t;
     }
 
-    /**
-     * Linear 보간 함수.
-     */
-    private double linear(double t) {
-        return t;
-    }
-
-    /**
-     * Ease In 함수.
-     */
     private double easeIn(double t) {
         return t * t;
     }
 
-    /**
-     * Ease Out 함수.
-     */
     private double easeOut(double t) {
         return 1 - Math.pow(1 - t, 2);
     }
 
-    /**
-     * Ease In-Out Cubic 함수.
-     */
     private double easeInOutCubic(double t) {
         return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
     }
@@ -183,7 +187,7 @@ public class Main extends JavaPlugin implements TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equalsIgnoreCase("cm")) {
             if (args.length == 1) {
-                List<String> subCommands = List.of("startpos", "endpos", "postime", "start");
+                List<String> subCommands = List.of("startpos", "endpos", "postime", "start", "endtp");
                 return filterResults(args[0], subCommands);
             } else if (args.length == 2) {
                 List<String> actionNumbers = new ArrayList<>();
