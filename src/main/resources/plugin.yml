@@ -1,0 +1,12 @@
+name: Cam
+version: 1.3
+main: com.maijsoft.cam.Main
+author: MAIJSOFT
+description: A camera control plugin for Minecraft 1.21
+api-version: 1.21
+
+commands:
+  cm:
+    description: Camera control commands.
+    usage: /<command> <subcommand> <args>
+    aliases: [camera]
